@@ -1,0 +1,33 @@
+#to plot forest for hazard ratio
+library("survminer")
+require("survival")
+library("survival")
+data=read.delim("input/BGB_3111_205/mutation_biomarker_PFS_HR_31AUG2019.txt",head=T,sep="\t")
+ls(data)
+
+output=matrix(,ncol=5,nrow=ncol(data)-3)#creak matrix
+colnames(output)=c("HR","2.5%CI","97.5%CI","pvalue","variables") #name col name for matrix
+
+i=4
+for (i in 4:(ncol(data))) {
+ data2=matrix(,ncol=3,nrow=nrow(data))
+ colnames(data2)=c("futime","fustat","var")
+ data2[,1]=data[,2]
+ data2[,2]=data[,3]
+ data2[,3]=data[,i]
+ data2=as.data.frame(data2)
+model=coxph(Surv(data2$futime,data2$fustat)~var,data=data2) #model different variables
+HR=round(exp(coef(model)),2)
+CI=round(exp(confint(model)),2)
+pvalue=summary(model)$coefficients[,5]
+output[i-3,1]=HR
+output[i-3,2]=CI[1,1]
+output[i-3,3]=CI[1,2]
+output[i-3,4]=pvalue
+}
+
+write.csv(output,"output.csv")
+
+ggforest(model,data=data,fontsize=0.6, cpositions=c(-2,0.05,0.18))
+
+
